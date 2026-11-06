@@ -638,7 +638,9 @@ const chipBtn =
   'text-(--ui-text-secondary) transition-colors hover:bg-(--chrome-action-hover) ' +
   'hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
 const segActive =
-  'shrink-0 rounded-md px-2.5 py-1 text-[0.75rem] font-medium bg-(--ui-accent) text-(--ui-bg-primary)'
+  'shrink-0 rounded-md px-2.5 py-1 text-[0.75rem] font-medium text-(--ui-text-primary)'
+// The primary fill is accent-tinted, not a surface or a foreground color.
+const segActiveStyle = { backgroundColor: 'var(--ui-control-active-background)', color: 'var(--ui-text-primary)' }
 const segIdle =
   'shrink-0 rounded-md px-2.5 py-1 text-[0.75rem] font-medium text-(--ui-text-secondary) hover:bg-(--chrome-action-hover)'
 
@@ -3081,6 +3083,7 @@ function ProfileSelector({ catalog, activeRoute }) {
                   type: 'button',
                   key,
                   className: chosen ? segActive : segIdle,
+                  style: chosen ? segActiveStyle : undefined,
                   'aria-pressed': Boolean(chosen),
                   'aria-label': `${label}${active ? ', active Desktop profile' : ''}`,
                   title: active ? `${label} — active Desktop profile` : `Browse ${label}`,
@@ -3147,7 +3150,7 @@ function NavigatorShell({ onClose } = {}) {
   const availableProjects = (projectsQuery.data?.projects || [])
 
   return jsxs('div', {
-    className: 'flex h-full min-h-0 flex-col bg-(--ui-bg-primary) text-(--ui-text-primary)',
+    className: 'flex h-full min-h-0 flex-col text-(--ui-text-primary)',
     children: [
       onClose ? jsxs('div', {
         className: 'flex items-center justify-between gap-2 border-b border-(--ui-stroke-secondary) px-2.5 py-1.5',
@@ -3176,12 +3179,14 @@ function NavigatorShell({ onClose } = {}) {
                   jsx('button', {
                     type: 'button',
                     className: view === 'projects' ? segActive : segIdle,
+                    style: view === 'projects' ? segActiveStyle : undefined,
                     onClick: () => setView('projects'),
                     children: 'Projects'
                   }),
                   jsx('button', {
                     type: 'button',
                     className: view === 'sessions' ? segActive : segIdle,
+                    style: view === 'sessions' ? segActiveStyle : undefined,
                     onClick: () => setView('sessions'),
                     children: 'Timeline'
                   })
