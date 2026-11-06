@@ -540,6 +540,7 @@ function prefetchTimeline(route, client = queryClient) {
 const viewAtom = atom('projects')
 const queryAtom = atom('')
 const browseStateAtom = atom({ manual: false, selected: null, unavailable: null })
+const idleBusyAtom = atom(false)
 
 // WhereDialog state atom: { open: boolean, route: any }
 const whereStateAtom = atom({ open: false, route: null })
@@ -2338,7 +2339,8 @@ function SessionRow({ session, focused, project, allProjects, route }) {
 
   const isLocal = isLocalRoute(route)
   const busyMap = useValue(host?.state?.busyBySession) || {}
-  const isBusy = Boolean(isLocal && session.id && (busyMap[session.id] || (isCurrent && host?.state?.busy && useValue(host?.state?.busy))))
+  const focusedBusy = useValue(host?.state?.busy || idleBusyAtom)
+  const isBusy = Boolean(isLocal && session.id && (busyMap[session.id] || (isCurrent && focusedBusy)))
 
   const selection = useValue(selectionAtom)
   const selectMode = Boolean(selection?.active)
