@@ -2,5 +2,14 @@
   "type": "module",
   "scripts": {
     "test": "node --loader ./tests/loader.mjs --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@nanostores/react": "^1.1.0",
+    "@tanstack/react-query": "^5.104.1",
+    "jsdom": "^29.1.1",
+    "nanostores": "^1.4.2",
+    "playwright": "^1.64.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }
