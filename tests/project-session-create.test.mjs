@@ -13,17 +13,17 @@ import {
 test('resolveProjectCwd returns null for home / null / isNoProject', () => {
   assert.equal(resolveProjectCwd(null), null)
   assert.equal(resolveProjectCwd({ isNoProject: true, label: 'Home' }), null)
-  assert.equal(resolveProjectCwd({ isNoProject: true, path: '/home/badi' }), null)
+  assert.equal(resolveProjectCwd({ isNoProject: true, path: '/example/home' }), null)
 })
 
 test('resolveProjectCwd returns project.path or repo path', () => {
   assert.equal(
-    resolveProjectCwd({ id: 'sillybunny-dev', path: '/home/badi/projects/sillybunny-dev' }),
-    '/home/badi/projects/sillybunny-dev'
+    resolveProjectCwd({ id: 'example-project', path: '/projects/example' }),
+    '/projects/example'
   )
   assert.equal(
-    resolveProjectCwd({ id: 'repo-only', repos: [{ path: '/home/badi/projects/repo' }] }),
-    '/home/badi/projects/repo'
+    resolveProjectCwd({ id: 'repo-only', repos: [{ path: '/projects/repo' }] }),
+    '/projects/repo'
   )
 })
 
@@ -36,7 +36,7 @@ test('createSessionInProject creates project session and navigates in-place', as
     capturedMethod = method
     capturedParams = params
     if (method === 'session.create') {
-      return { session_id: 's_sillybunny_123', stored_session_id: 'stored_sillybunny_123' }
+      return { session_id: 'runtime-fixture', stored_session_id: 'stored-fixture' }
     }
     return {}
   })
@@ -49,20 +49,21 @@ test('createSessionInProject creates project session and navigates in-place', as
   }
 
   const project = {
-    id: 'sillybunny-dev',
-    label: 'SillyBunny Dev',
-    path: '/home/badi/projects/sillybunny-dev'
+    id: 'example-project',
+    label: 'Example Project',
+    path: '/projects/example'
   }
 
   const createdId = await createSessionInProject(project, route)
-  assert.equal(createdId, 'stored_sillybunny_123')
+  assert.equal(createdId, 'stored-fixture')
   assert.equal(capturedMethod, 'session.create')
   assert.deepEqual(capturedParams, {
-    cwd: '/home/badi/projects/sillybunny-dev'
+    cwd: '/projects/example',
+    cwd_explicit: true
   })
-  assert.equal(host.lastOpenedSession?.sessionId, 'stored_sillybunny_123')
+  assert.equal(host.lastOpenedSession?.sessionId, 'stored-fixture')
   assert.equal(host.lastOpenedSession?.options?.intent, 'in-place')
-  assert.match(host.lastNotification?.message || '', /Started new session in SillyBunny Dev/)
+  assert.match(host.lastNotification?.message || '', /Started new session in Example Project/)
 })
 
 test('createSessionInProject creates home session when isNoProject', async () => {

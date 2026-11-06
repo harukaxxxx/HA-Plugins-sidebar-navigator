@@ -2047,21 +2047,28 @@ async function createSessionInProject(targetProject, route) {
   const label = targetProject?.isNoProject || !targetProject
     ? 'Home'
     : (targetProject.label || targetProject.name || targetProject.id)
+  let newId = null
   try {
     const targetCwd = resolveProjectCwd(targetProject)
+    if (targetProject && !targetProject.isNoProject && !targetCwd) {
+      throw new Error('Project has no folder or repository path; cannot start a project session.')
+    }
     const params = {}
     if (targetCwd !== null) {
       params.cwd = targetCwd
+      params.cwd_explicit = true
     }
     const result = await mutateForRoute(route, 'session.create', params)
-    const newId = result?.stored_session_id || result?.session_key || result?.session_id
+    newId = result?.stored_session_id || result?.session_key || result?.session_id
     if (!newId) throw new Error('Create session did not return a session id')
     invalidateRoute(route)
     await openSessionForRoute(route, newId, 'in-place')
     host.notify({ kind: 'success', message: `Started new session in ${label}` })
     return newId
   } catch (err) {
-    host.notifyError?.(err, `Failed to create session in ${label}`)
+    host.notifyError?.(err, newId
+      ? `Session ${newId} was created in ${label}, but could not be opened`
+      : `Failed to create session in ${label}`)
     throw err
   }
 }
@@ -2502,7 +2509,7 @@ function SessionRow({ session, focused, project, allProjects, route }) {
               jsx(ContextMenuSeparator, {}),
               // Fast-path: New session in this project (if within project)
               (project && !project.isNoProject) ? jsxs(ContextMenuItem, {
-                onSelect: () => void createSessionInProject(project, route),
+                onSelect: () => void createSessionInProject(project, route).catch(() => {}),
                 children: [
                   jsx(Codicon, { name: 'add', size: '0.875rem' }),
                   jsx('span', { children: `New session in ${project.label || project.name || project.id}` })
@@ -2832,7 +2839,7 @@ function ProjectCard({ project, allProjects, currentId, filterQuery, route }) {
         title: `New session in ${projectLabel}`,
         onClick: (e) => {
           e.stopPropagation()
-          void createSessionInProject(project, route)
+          void createSessionInProject(project, route).catch(() => {})
         },
         children: [
           jsx(Codicon, { name: 'add', size: '0.75rem' }),
@@ -2842,15 +2849,14 @@ function ProjectCard({ project, allProjects, currentId, filterQuery, route }) {
       !project.isNoProject ? jsx('button', {
         type: 'button',
         className: 'shrink-0 flex items-center gap-1 rounded px-1.5 py-0.5 text-[0.6875rem] font-medium text-(--ui-text-secondary) hover:text-(--ui-text-primary) hover:bg-(--chrome-action-hover) border border-(--ui-stroke-secondary) transition-colors',
-        title: `Open Cockpit for ${projectLabel}`,
+        title: `Start project session in ${projectLabel}`,
         onClick: (e) => {
           e.stopPropagation()
-          const slug = project.id || project.name || project.label || ''
-          host.navigate(`/cockpit?project=${encodeURIComponent(slug)}`)
+          void createSessionInProject(project, route).catch(() => {})
         },
         children: [
           jsx(IconOr, { icon: 'Zap', glyph: '⚡' }),
-          jsx('span', { className: 'hidden sm:inline', children: 'Cockpit' })
+          jsx('span', { className: 'hidden sm:inline', children: 'Start session' })
         ]
       }) : null,
       jsx('span', {
@@ -2875,7 +2881,7 @@ function ProjectCard({ project, allProjects, currentId, filterQuery, route }) {
             children: [
               // Fast-path: New session in this project
               jsxs(ContextMenuItem, {
-                onSelect: () => void createSessionInProject(project, route),
+                onSelect: () => void createSessionInProject(project, route).catch(() => {}),
                 children: [
                   jsx(Codicon, { name: 'add', size: '0.875rem' }),
                   jsx('span', { children: `New session in ${projectLabel}` })
@@ -2890,13 +2896,10 @@ function ProjectCard({ project, allProjects, currentId, filterQuery, route }) {
                 ]
               }),
               !project.isNoProject ? jsxs(ContextMenuItem, {
-                onSelect: () => {
-                  const slug = project.id || project.name || project.label || ''
-                  host.navigate(`/cockpit?project=${encodeURIComponent(slug)}`)
-                },
+                onSelect: () => void createSessionInProject(project, route).catch(() => {}),
                 children: [
                   jsx(Codicon, { name: 'zap', size: '0.875rem' }),
-                  jsx('span', { children: 'Open Cockpit' })
+                  jsx('span', { children: 'Start project session' })
                 ]
               }) : null,
               projectCwd ? jsxs(ContextMenuItem, {

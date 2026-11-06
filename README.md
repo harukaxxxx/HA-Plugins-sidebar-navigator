@@ -33,7 +33,7 @@ In Hermes Desktop, the default sidebar project view limits previews to **3 sessi
 - **Session menu:** New window, Rename, Pin, Mark unread, Appearance (colour), Copy ID, Tags, Branch, Export (JSON), Move to project, Archive, Delete.
   Pin and colour also update the real sidebar for the profile Desktop is currently showing (through `host.sessions`); for other profiles they are remembered by the Navigator only.
 - **Where chooser (v0.7):** *New session (choose location)…* on sessions, project cards, and the Navigator background opens a dialog to start a session in Home or any project, with a project filter.
-- **Project menu:** New session, Open Cockpit, Copy path.
+- **Project menu:** New session, Start project session, Copy path. The former Cockpit shortcut starts a project session instead; it does not open a Cockpit page.
 - **Bulk actions (v0.8):** Click the checklist button in the header to enter select mode, tick sessions (or a whole project / the whole Timeline with the header checkbox), then **Tag…**, **Move…**, **Archive**, or **Delete** them in one go. Selection is scoped to one profile at a time. Sessions with a turn in flight are skipped, delete asks first, and anything that fails stays selected so you can retry.
 
 ---
