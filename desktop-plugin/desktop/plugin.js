@@ -505,7 +505,7 @@ async function openSessionForRoute(route, sessionId, intent = 'in-place', sessio
     keepAllProfilesScope: false
   })
 }
-const SESSIONS_LIMIT = 500
+const SESSIONS_LIMIT = 200
 const TREE_PREVIEW_LIMIT = 100
 const PROJECT_SESSION_LIMIT = 2000
 // Rows mounted at once in the Timeline / an expanded project; "Show more" adds a page.
@@ -519,10 +519,34 @@ function fetchProjectList(route) {
 
 // One definition for the Timeline's session list, shared by the Timeline and the
 // prefetch that warms it when the Navigator opens (same key, same fetch).
+function unsupportedSessionListScope(error) {
+  const message = typeof error === 'string' ? error : error?.message || error?.detail || ''
+  // The legacy validator identifies the *only* offending field explicitly.
+  // Never retry generic invalid-params errors, which could mask other failures.
+  return /^invalid params for session\.list: scope: Extra inputs are not permitted(?: — the client and the Hermes backend are out of sync \(different versions\); run `hermes update` and restart both)?$/i.test(message)
+}
+
 function sessionListQuery(route) {
   return {
-    queryKey: queryKey('sessions', route),
-    queryFn: () => requestForRoute(route, 'session.list', { limit: SESSIONS_LIMIT }),
+    queryKey: queryKey('sessions', route, ['stored-200-v1']),
+    queryFn: async () => {
+      let result
+      try {
+        result = await requestForRoute(route, 'session.list', { limit: SESSIONS_LIMIT, scope: 'stored' })
+        if (result?.error) throw result.error
+      } catch (error) {
+        if (!unsupportedSessionListScope(error)) throw error instanceof Error ? error : new Error(typeof error === 'string' ? error : error?.message || error?.detail || 'Session list request failed')
+        // Legacy session.list always reads stored sessions and rejects scope.
+        result = await requestForRoute(route, 'session.list', { limit: SESSIONS_LIMIT })
+      }
+      if (result?.error) {
+        const error = result.error
+        throw new Error(typeof error === 'string' ? error : error.message || error.detail || 'Session list request failed')
+      }
+      if (!Array.isArray(result?.sessions)) throw new Error('Invalid session list response')
+      if (result.scope != null && result.scope !== 'stored') throw new Error('Session list did not return stored sessions')
+      return result
+    },
     enabled: Boolean(route),
     refetchInterval: 15000,
     staleTime: 5000
@@ -2660,14 +2684,14 @@ function SessionRow({ session, focused, project, allProjects, route }) {
 
 // ── Sessions Flattened View ──────────────────────────────────────────────────
 
-function ShowMoreButton({ total, shown, onMore }) {
+function ShowMoreButton({ total, shown, onMore, loadedOnly = false }) {
   if (total <= shown) return null
   const next = Math.min(ROW_PAGE_SIZE, total - shown)
   return jsx('button', {
     type: 'button',
     className: 'mt-1 w-full rounded py-1 text-center text-[0.6875rem] font-medium text-(--ui-accent) hover:bg-(--chrome-action-hover) transition-colors',
     onClick: onMore,
-    children: `Show ${next} more (${total - shown} hidden)`
+    children: `Show ${next} more${loadedOnly ? ' loaded' : ''} (${total - shown} hidden)`
   })
 }
 
@@ -2716,11 +2740,13 @@ function SessionBrowser({ route }) {
             onToggle: () => (visibleSelectedCount === filtered.length ? deselectSessions : selectSessions)(route, filtered.map(s => s.id))
           }) : null,
           jsx('span', {
-            children: listQuery.status === 'pending'
+            children: !route
+              ? 'Select a profile to load sessions.'
+              : listQuery.status === 'pending'
               ? 'Loading sessions…'
               : listQuery.status === 'error'
                 ? describeBrowseError(listQuery.error, route, 'sessions')
-                : `${filtered.length} session${filtered.length === 1 ? '' : 's'}`
+                : `${filtered.length} matching session${filtered.length === 1 ? '' : 's'} · Up to ${SESSIONS_LIMIT} most recently active sessions loaded${rawSessions.length >= SESSIONS_LIMIT ? ' (limit reached; older sessions may be missing)' : ''}`
           })
         ]
       }),
@@ -2730,7 +2756,7 @@ function SessionBrowser({ route }) {
           ...filtered.slice(0, shown).map((s) =>
             jsx(SessionRow, { session: s, focused: s.id === currentId, allProjects, route }, rowKey(route, s.id))
           ),
-          jsx(ShowMoreButton, { total: filtered.length, shown, onMore: () => setShown(shown + ROW_PAGE_SIZE) }, '__more__')
+          jsx(ShowMoreButton, { total: filtered.length, shown, loadedOnly: true, onMore: () => setShown(shown + ROW_PAGE_SIZE) }, '__more__')
         ]
       })
     ]

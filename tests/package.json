@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node --loader ./tests/loader.mjs --test tests/*.test.mjs"
+    "test": "node --loader ./tests/loader.mjs --test tests/*.test.mjs",
+    "regression": "node --experimental-vm-modules launch.regression.mjs && node --experimental-vm-modules navigator-render.regression.mjs && node --experimental-vm-modules timeline-query.regression.mjs && node --experimental-vm-modules timeline-ui.regression.mjs"
   },
   "devDependencies": {
     "@nanostores/react": "^1.1.0",

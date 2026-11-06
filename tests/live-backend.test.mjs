@@ -20,6 +20,7 @@ import {
   fetchSessionMessages,
   renameSession,
   requestForRoute,
+  sessionListQuery,
   selectionAtom,
   selectionFor,
   withStoredSession
@@ -167,7 +168,7 @@ test('bulk move changes the working directory of every selected session', { skip
 test('the Navigator list calls return the shapes the plugin reads', { skip }, async () => {
   useBackend()
   const ids = await seed(2)
-  const list = await requestForRoute(route, 'session.list', { limit: 500 })
+  const list = await sessionListQuery(route).queryFn()
   assert.ok(ids.every(id => list.sessions.some(s => s.id === id)))
   for (const key of ['id', 'title', 'preview', 'started_at', 'message_count']) {
     assert.ok(key in list.sessions[0], `session rows carry ${key}`)
