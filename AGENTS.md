@@ -10,8 +10,9 @@ Local operating contract for `HA-Plugins-sidebar-navigator`.
 4. **Seamless Navigation:** Deep-links directly to `#/<sessionId>` via the official `host.navigate` interface.
 
 ## GitHub Lane & Identity
-- **Repository:** `badiyee85/HA-Plugins-sidebar-navigator`
-- **Identity:** Always commit and push using the `badiyee85` GitHub identity. Never push using `cspiritsong`.
+- **Fork:** `harukaxxxx/HA-Plugins-sidebar-navigator`; upstream is `badiyee85/HA-Plugins-sidebar-navigator`.
+- Push fork maintenance only to the fork; do not push to upstream. Preserve the actual
+  author's identity and use the executing maintainer's approved commit identity.
 
 ## Hermes Plugin Catalog & Packaging Standards
 This project complies strictly with the curated Hermes Plugin Catalog standards (`NousResearch/hermes-agent/plugin-catalog`):

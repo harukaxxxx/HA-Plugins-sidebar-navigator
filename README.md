@@ -60,6 +60,38 @@ Right-click any session, project, or the empty Navigator background for the full
 
 ## Installation
 
+### Fork maintenance and regression tests
+
+This fork is maintained independently of the upstream catalog. For a standalone
+Desktop install, link the existing loader folder to this checkout's
+`desktop-plugin/desktop` directory. Keep the existing plugin ID and storage;
+back up the original loader folder first. This is a manual source installation,
+not a managed catalog install: `hermes plugins update` does not update this
+checkout. To update, review and merge upstream changes into the fork, run the
+checks below, push the fork, and update the checkout. Reload Desktop plugins if
+needed. Do not keep a catalog-managed copy of the same plugin alongside it.
+
+Timeline requests up to 200 stored sessions. “Show more loaded” only reveals
+rows already fetched; it does not fetch older pages. Canonical gateways receive
+`scope: stored`; legacy gateways that explicitly reject that field are retried
+once without it because their session list reads stored sessions by default.
+Other errors remain visible and are not retried as legacy requests.
+
+From the repository root, with Node 22 and a compatible local Hermes source tree
+for the existing live gateway tests:
+
+```bash
+npm install --prefix tests
+node --loader ./tests/loader.mjs --test tests/*.test.mjs
+npm --prefix tests run regression
+HERMES_DESKTOP_CSS=/path/to/desktop/assets/main.css node --experimental-vm-modules tests/style.regression.mjs
+```
+
+The visual check also needs Playwright Chromium (`npx --prefix tests playwright
+install chromium`) and the executing Desktop build's CSS. It is a controlled
+style check, not live Desktop acceptance. Existing live tests use their own
+isolated gateway fixtures; see `tests/live/gateway.mjs` for configuration.
+
 ### Via Curated Hermes Plugin Catalog
 ```bash
 hermes plugins install ha-sidebar-navigator
